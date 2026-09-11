@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+
+    /* Type safety. `strict` was off before the hardening pass, which removed
+       most of the reason to be writing TypeScript at all. */
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "noUncheckedIndexedAccess": false,
+    "noImplicitOverride": true,
+    "forceConsistentCasingInFileNames": true,
+
+    /* Output. The original value was a typo ("admin_build_build_buildn_build"),
+       so `npm run build` wrote to a folder nothing read. */
+    "outDir": "dist",
+    "rootDir": ".",
+    "sourceMap": true,
+    "declaration": false
+  },
+
+  "include": ["**/*.ts"],
+
+  /* `scripts/` is deliberately out of the production build. Those are
+     operator and test tools: they are run with tsx, they never ship, and
+     `featureTest.ts` / `socketTest.ts` pull in dev-only packages that a
+     production install prunes. Compiling them broke the deploy.
+     Use `npm run typecheck` to check them. */
+  "exclude": ["node_modules", "dist", "admin_build", "user_build", "scripts"]
+}

@@ -1,0 +1,10 @@
+{
+  /* Everything, including the operator and test scripts under scripts/.
+     Used by `npm run typecheck`; the deploy build uses tsconfig.json. */
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules", "dist", "admin_build", "user_build"]
+}

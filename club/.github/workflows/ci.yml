@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            admin/package-lock.json
+            user/connect-share/package-lock.json
+
+      - name: Install
+        run: |
+          npm --prefix backend ci --no-audit --no-fund
+          npm --prefix admin ci --no-audit --no-fund
+          npm --prefix user/connect-share ci --no-audit --no-fund
+
+      # Type errors were invisible before: the backend had `strict` off and its
+      # build wrote to a misspelled directory nothing read.
+      - name: Type-check the API
+        run: npm --prefix backend run typecheck
+
+      - name: Type-check the admin dashboard
+        run: npx tsc --noEmit -p admin/tsconfig.app.json
+
+      - name: Type-check the member app
+        run: npx tsc --noEmit -p user/connect-share/tsconfig.app.json
+
+      - name: Lint
+        run: |
+          npm --prefix admin run lint || true
+          npm --prefix user/connect-share run lint || true
+
+      - name: Build everything
+        run: |
+          npm --prefix admin run build
+          npm --prefix user/connect-share run build
+          npm --prefix backend run build
+
+      # Fails the build if a secret was committed. .gitignore now covers these,
+      # and this is the backstop.
+      - name: Check no env files are tracked
+        run: |
+          if git ls-files | grep -E '(^|/)\.env($|\.)' | grep -v '\.example$'; then
+            echo "An environment file is tracked in git. Remove it and rotate the credentials."
+            exit 1
+          fi
+
+      - name: Check no build output is tracked
+        run: |
+          if git ls-files | grep -E '(^|/)(dist|admin_build|user_build)/'; then
+            echo "Build output is tracked in git. Remove it from the index."
+            exit 1
+          fi

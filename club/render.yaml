@@ -1,0 +1,97 @@
+# Render blueprint.
+#
+# One service. The API serves both front ends from the same origin, so there is
+# no CORS to configure between them and no second deployment to keep in step.
+#
+# The build command matters: `npm run build:full` compiles the API and then
+# builds both front ends straight into backend/dist. Building them on the host
+# is deliberate. The build output is git-ignored, so a copy made on a laptop
+# never reaches Render, which is exactly why the site came up as API-only.
+#
+# Secrets are set in the Render dashboard. Anything marked `sync: false` is
+# prompted for on first deploy and is never stored in git.
+
+services:
+  - type: web
+    name: club
+    runtime: node
+    rootDir: backend
+    plan: free
+
+    # `npm ci` runs with NODE_ENV=production and prunes devDependencies, so
+    # everything the API build needs (typescript, the @types packages) is a
+    # dependency rather than a devDependency.
+    #
+    # The front ends are installed by build:full, which prefers `npm ci` and
+    # falls back to `npm install` when the host's npm rejects a lock file it
+    # did not write. That happens between npm versions over peer dependencies
+    # and is not something the repository can prevent.
+    buildCommand: npm ci && npm run build:full
+    startCommand: npm start
+
+    healthCheckPath: /healthz
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+      - key: MONGO_URI
+        sync: false
+
+      # Generated once by Render and then held steady. Changing either signs
+      # everybody out, which is correct when rotating and disruptive otherwise.
+      - key: ACCESS_TOKEN_SECRET
+        generateValue: true
+      - key: REFRESH_TOKEN_SECRET
+        generateValue: true
+
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+
+      # This service's own public URL, for the password-reset link and for the
+      # socket's allowed origins. The front ends are same-origin, so they need
+      # no VITE_BACKEND_URL: they fall back to /api.
+      - key: RESET_URL
+        sync: false
+      - key: FRONTEND_USER_PRODUCTION_URL
+        sync: false
+      - key: FRONTEND_ADMIN_PRODUCTION_URL
+        sync: false
+
+      # Optional integrations. Leave unset to switch that feature off; the
+      # server starts either way and the relevant route reports it.
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_CALLBACK_URL
+        sync: false
+      - key: GOOGLE_ANDROID_CLIENT_ID
+        sync: false
+      - key: GOOGLE_IOS_CLIENT_ID
+        sync: false
+      - key: APPLE_BUNDLE_ID
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASS
+        sync: false
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_PHONE_NUMBER
+        sync: false
+
+      # Lets mobile app versions that are already installed keep reaching the
+      # handful of /api/admin paths they were built against. Set to "off" once
+      # the App Store update has rolled out and the "legacy mobile endpoint"
+      # log line stops appearing.
+      - key: LEGACY_APP_COMPAT
+        value: "on"

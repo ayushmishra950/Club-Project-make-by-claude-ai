@@ -1,0 +1,40 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# environment: never commit any of these
+.env
+.env.*
+!.env.example
+*.env
+
+# Build output: generated, never tracked.
+#
+# The API builds the two front ends on the host (`npm run build:full` in
+# backend/), so nothing here needs committing. Committing a build made on a
+# laptop is how a stale bundle reaches production.
+dist/
+build/
+admin/dist/
+user/connect-share/dist/
+backend/dist/
+backend/admin_build/
+backend/user_build/
+*.tsbuildinfo
+
+# logs
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# editors and OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# test output
+coverage/
+playwright-report/
+test-results/
